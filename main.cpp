@@ -25,6 +25,8 @@ int main(int argc, char** argv)
     input = argv[1];
 
   Format format(input);
+  Format format2(input);
+
   av_dump_format(format.get_context(),0, format.get_filename(), 0);
   auto* mystream = format.best_video_stream();
 
@@ -32,6 +34,8 @@ int main(int argc, char** argv)
   const int HEIGHT = 540;
 
   SWScaler my_scaler(mystream,WIDTH,HEIGHT);
+  SWScaler my_scalermini(mystream,WIDTH/8,HEIGHT/8);
+
   SDLScreen my_screen("My Screen",WIDTH,HEIGHT);
 
   std::vector<AVFrame*> frames;
@@ -66,12 +70,16 @@ int main(int argc, char** argv)
 
       if(1)
       {
-
         auto *scaled = my_scaler.scale(frame);
-        my_screen.display_frame(scaled,WIDTH,HEIGHT);
-        my_screen.save_frame_into_texture(scaled,WIDTH,HEIGHT);
-        av_frame_free(&scaled);
+        auto *mini = my_scalermini.scale(frame);
 
+        my_screen.display_frame(scaled,WIDTH,HEIGHT);
+
+        my_screen.save_frame_into_texture(scaled,WIDTH,HEIGHT);
+        my_screen.save_frame_into_texturemini(mini,WIDTH/8,HEIGHT/8);
+
+        av_frame_free(&scaled);
+        av_frame_free(&mini);
       }
 
 
@@ -87,7 +95,7 @@ int main(int argc, char** argv)
     }
   }
 
-  printf("%lu key frames recorded.\n",my_screen.TextureVector.size());
+  printf("%lu frames recorded.\n",my_screen.TextureVector.size());
 
   while(my_screen.TextureVector.size()>0)
   {
