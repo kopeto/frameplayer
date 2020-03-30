@@ -1,0 +1,76 @@
+#include "stream.h"
+#include "packet.h"
+#include "format.h"
+#include "codec.h"
+#include "swscaler.h"
+#include "sdlscreen.h"
+#include <iostream>
+#include <iomanip>
+
+#include "utils.h"
+
+// const int WIDTH = 800;
+// const int HEIGHT = 600;
+
+const char* filename = "in.mp4";
+
+int main(int argc, char** argv)
+{
+  const char *input;
+  if(argc<2)
+    input=filename;
+  else
+    input = argv[1];
+
+  Format format(input);
+  std::cout<< "Number of streams: "<<format.nbStreams() << std::endl;
+  av_dump_format(format.get_context(),0, format.get_filename(), 0);
+  VideoStream* mystream = format.best_video_stream();
+
+  const int WIDTH = 1920;
+  const int HEIGHT = 1080;
+
+  SWScaler my_scaler(mystream,WIDTH,HEIGHT);
+
+  SDLScreen my_screen("My Screen",WIDTH,HEIGHT);
+
+  if(mystream)
+  {
+    mystream->open_codec();
+
+    print_stream_info(mystream);
+
+    AVPacket *packet = av_packet_alloc();
+    int f_count=0;
+
+    while (av_read_frame(format.get_context(), packet) >= 0) {
+      if(packet->stream_index!=mystream->get_stream()->index)
+      {
+        continue;
+      }
+      // framelist[f_count] = av_frame_alloc();
+      AVFrame *frame = av_frame_alloc();
+      f_count++;
+
+      avcodec_send_packet(mystream->get_codec_context(), packet);
+      avcodec_receive_frame(mystream->get_codec_context(), frame);
+
+      AVFrame *scaled = my_scaler.scale(frame);
+      //print_frame_info(frame, mystream->get_codec_context());
+      //framelist[f_count] =  my_scaler.scale(frame);
+
+      my_screen.display_texture(scaled,WIDTH,HEIGHT);
+
+      my_screen.poll_event();
+
+      av_packet_unref(packet);
+      av_frame_free(&frame);
+      av_frame_free(&scaled);
+
+
+
+    }
+  }
+
+   getchar();
+}
