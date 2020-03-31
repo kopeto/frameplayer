@@ -8,17 +8,37 @@ SWScalerYUV420::~SWScalerYUV420()
 
 }
 
-SWScalerYUV420::SWScalerYUV420(const VideoStream *stream, int dest_width, int dest_height, bool keep_proportion):
-    src_height(stream->get_codec_context()->height),
-    dest_width(dest_width),
-    dest_height(dest_height),
-    yPlane((Uint8*)malloc(dest_width * dest_height)),
-    uPlane((Uint8*)malloc(dest_width * dest_height / 4)),
-    vPlane((Uint8*)malloc(dest_width * dest_height / 4)),
-    yPlaneSz(dest_width * dest_height),
-    uvPlaneSz(dest_width * dest_height / 4),
-    uvPitch(dest_width/2)
+SWScalerYUV420::SWScalerYUV420(const VideoStream *stream, int _dest_width, int _dest_height):
+    dest_width(_dest_width),
+    dest_height(_dest_height)
 {
+  if( !dest_width && !dest_height)
+  {
+    // DONT scale, just set pixel format
+    dest_width = stream->get_codec_context()->width;
+    dest_height = stream->get_codec_context()->height;
+  }
+  else if((!dest_width && dest_height) || (dest_width && !dest_height))
+  {
+    // keep porportions
+    double prop = (double)stream->get_codec_context()->width / (double)stream->get_codec_context()->height;
+    if(dest_width)
+    {
+      dest_height = (int) ((double)dest_width / prop);
+    }
+    else
+    {
+      dest_width = (int) ((double)dest_height * prop);
+    }
+  }
+
+  yPlane = (Uint8*)malloc(dest_width * dest_height);
+  uPlane = (Uint8*)malloc(dest_width * dest_height / 4);
+  vPlane = (Uint8*)malloc(dest_width * dest_height / 4);
+  yPlaneSz = dest_width * dest_height;
+  uvPlaneSz = dest_width * dest_height / 4;
+  uvPitch = dest_width/2;
+
   context = sws_getContext(
    stream->get_codec_context()->width,
    stream->get_codec_context()->height,
@@ -47,7 +67,7 @@ AVFrame* SWScalerYUV420::scale(AVFrame* src_frame)
     src_frame->data,
     src_frame->linesize,
     0,
-    src_height,
+    src_frame->height,
     scaled->data,
     scaled->linesize
   );

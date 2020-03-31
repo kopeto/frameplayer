@@ -197,17 +197,13 @@ void SDLScreen::poll_event()
         if(lastx == event.motion.x) break;
         lastx=event.motion.x;
         auto idx = (unsigned)(((double)event.motion.x / width)*(double)TextureVector.size());
-        //printf("%d\n",idx);
         display_texture(idx,event.motion.y > height - height/8);
-        // if(event.motion.y > height - height/8)
-        //   display_texturemini(idx);
       }
       break;
     }
     default:
       break;
     }
-  SDL_Delay(5);
 }
 
 void SDLScreen::quit_all()

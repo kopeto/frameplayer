@@ -32,7 +32,7 @@ int main(int argc, char** argv)
   const int WIDTH = 960;
   const int HEIGHT = 540;
 
-  SWScalerYUV420 my_scaler(mystream,WIDTH,HEIGHT,0);
+  SWScalerYUV420 my_scaler(mystream,WIDTH,HEIGHT);
 
   SDLScreen my_screen("My Screen",WIDTH,HEIGHT);
 
@@ -49,16 +49,14 @@ int main(int argc, char** argv)
 
     while (av_read_frame(format.get_context(), packet) >= 0) {
       my_screen.poll_event();
+
       if(packet->stream_index!=mystream->get_stream()->index)
       {
         continue;
       }
-      // framelist[f_count] = av_frame_alloc();
-
 
       avcodec_send_packet(mystream->get_codec_context(), packet);
       avcodec_receive_frame(mystream->get_codec_context(), frame);
-      // if(frame->key_frame)
 
       if(av_get_picture_type_char(frame->pict_type)=='?')
       {
@@ -79,8 +77,6 @@ int main(int argc, char** argv)
     av_packet_unref(packet);
     av_frame_free(&frame);
   }
-
-  printf("%lu frames recorded.\n",my_screen.TextureVector.size());
 
   my_screen.state = SDLScreen::State::DISPLAYING;
   while(my_screen.TextureVector.size()>0)
