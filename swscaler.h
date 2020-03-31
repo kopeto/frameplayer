@@ -10,12 +10,12 @@ extern "C"
 #include "stream.h"
 typedef unsigned char Uint8;
 
-class SWScaler
+class SWScalerYUV420
 {
 
 public:
-  SWScaler(const VideoStream *stream, int dest_width, int dest_height);
-  ~SWScaler();
+  SWScalerYUV420(const VideoStream *stream, int dest_width, int dest_height, bool keep_proportion);
+  ~SWScalerYUV420();
   SwsContext* get_context();
   AVFrame* scale(AVFrame* src_frame);
 

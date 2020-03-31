@@ -3,12 +3,12 @@
 #include <iomanip>
 
 
-SWScaler::~SWScaler()
+SWScalerYUV420::~SWScalerYUV420()
 {
 
 }
 
-SWScaler::SWScaler(const VideoStream *stream, int dest_width, int dest_height):
+SWScalerYUV420::SWScalerYUV420(const VideoStream *stream, int dest_width, int dest_height, bool keep_proportion):
     src_height(stream->get_codec_context()->height),
     dest_width(dest_width),
     dest_height(dest_height),
@@ -33,7 +33,7 @@ SWScaler::SWScaler(const VideoStream *stream, int dest_width, int dest_height):
  );
 }
 
-AVFrame* SWScaler::scale(AVFrame* src_frame)
+AVFrame* SWScalerYUV420::scale(AVFrame* src_frame)
 {
   AVFrame* scaled = av_frame_alloc();
   scaled->data[0] = yPlane;
@@ -53,7 +53,8 @@ AVFrame* SWScaler::scale(AVFrame* src_frame)
   );
 
   scaled->pts = src_frame->pts;
-  //scaled->duration = src_frame->duration;
+  scaled->width = dest_width;
+  scaled->height = dest_height;
 
   return scaled;
 }

@@ -21,17 +21,27 @@ SDLScreen::SDLScreen(const char* window_name, int w, int h):
     SDL_RENDERER_ACCELERATED
   );
 
-  texture = SDL_CreateTexture(
-    renderer,
-    SDL_PIXELFORMAT_YV12,
-    SDL_TEXTUREACCESS_STREAMING,
-    width,height
-  );
+  // texture = SDL_CreateTexture(
+  //   renderer,
+  //   SDL_PIXELFORMAT_YV12,
+  //   SDL_TEXTUREACCESS_STREAMING,
+  //   width,height
+  // );
 
+  texture = NULL;
+  state = State::STOP;
 }
 
 void SDLScreen::display_frame(AVFrame* frame,int w,int h)
 {
+  if(texture)
+    SDL_DestroyTexture(texture);
+  texture = SDL_CreateTexture(
+    renderer,
+    SDL_PIXELFORMAT_YV12,
+    SDL_TEXTUREACCESS_STREAMING,
+    w,h
+  );
   //TODO: locl/unlock texture durin update
   SDL_UpdateYUVTexture(
     texture,
@@ -43,8 +53,10 @@ void SDLScreen::display_frame(AVFrame* frame,int w,int h)
     frame->data[2], //vPlane,
     frame->linesize[1] //uvPitch
   );
+  SDL_Rect dst{0,0,width,height};
+  SDL_Rect src{0,0,w,h};
   SDL_RenderClear(renderer);
-  SDL_RenderCopy(renderer, texture, NULL, NULL);
+  SDL_RenderCopy(renderer, texture, &src, &dst);
   SDL_RenderPresent(renderer);
 }
 
@@ -71,6 +83,40 @@ void SDLScreen::save_frame_into_texture(AVFrame* frame,int w,int h)
   );
 }
 
+
+void SDLScreen::display_texture(unsigned i, bool mini)
+{
+  if(i<TextureVector.size())
+  {
+    SDL_RenderClear(renderer);
+    SDL_Rect dst{0,0,width,height};
+    SDL_RenderCopy(renderer, TextureVector[i], NULL, &dst);
+
+    if(mini) // minitexture
+    {
+      //display_texturemini(unsigned i);
+      // calc position
+      int x,y,w,h;
+      w = width/8;
+      h = height/8;
+      // SDL_QueryTexture(TextureminiVector[i],
+      //   NULL, NULL,
+      //   &w,&h
+      // );
+
+      x = (int) ((double)i / (double)TextureVector.size() * (double)width) - w/2;
+      if(x<0) x = 0;
+      if(x+w>width) x=width-w;
+      y = height - h;
+
+      SDL_Rect dest{x,y,w,h};
+      SDL_RenderCopy(renderer, TextureVector[i], NULL, &dest);
+    }
+
+    SDL_RenderPresent(renderer);
+  }
+}
+
 void SDLScreen::save_frame_into_texturemini(AVFrame* frame,int w,int h)
 {
   TextureminiVector.push_back(
@@ -83,26 +129,16 @@ void SDLScreen::save_frame_into_texturemini(AVFrame* frame,int w,int h)
   );
 
   SDL_UpdateYUVTexture(
-      TextureminiVector.back(),
-      NULL,
-      frame->data[0], //yPlane,
-      w,
-      frame->data[1], //uPlane,
-      frame->linesize[2], // uvPitch,
-      frame->data[2], //vPlane,
-      frame->linesize[1] //uvPitch
+    TextureminiVector.back(),
+    NULL,
+    frame->data[0], //yPlane,
+    w,
+    frame->data[1], //uPlane,
+    frame->linesize[2], // uvPitch,
+    frame->data[2], //vPlane,
+    frame->linesize[1] //uvPitch
   );
 }
-
-void SDLScreen::display_texture(unsigned i)
-{
-  if(i<TextureVector.size())
-  {
-    SDL_RenderClear(renderer);
-    SDL_RenderCopy(renderer, TextureVector[i], NULL, NULL);
-    SDL_RenderPresent(renderer);  }
-}
-
 void SDLScreen::display_texturemini(unsigned i)
 {
   if(i<TextureminiVector.size())
@@ -156,13 +192,16 @@ void SDLScreen::poll_event()
     }
     case SDL_MOUSEMOTION:
     {
-      if(lastx == event.motion.x) break;
-      lastx=event.motion.x;
-      auto idx = (unsigned)(((double)event.motion.x / width)*(double)TextureVector.size());
-      //printf("%d\n",idx);
-      display_texture(idx);
-      if(event.motion.y > height - height/8)
-        display_texturemini(idx);
+      if(state != State::STOP)
+      {
+        if(lastx == event.motion.x) break;
+        lastx=event.motion.x;
+        auto idx = (unsigned)(((double)event.motion.x / width)*(double)TextureVector.size());
+        //printf("%d\n",idx);
+        display_texture(idx,event.motion.y > height - height/8);
+        // if(event.motion.y > height - height/8)
+        //   display_texturemini(idx);
+      }
       break;
     }
     default:
@@ -177,9 +216,12 @@ void SDLScreen::quit_all()
     SDL_DestroyTexture(p);
   for(auto p: TextureminiVector)
     SDL_DestroyTexture(p);
-  SDL_DestroyTexture(texture);
-  SDL_DestroyRenderer(renderer);
-  SDL_DestroyWindow(window);
+  if(texture)
+    SDL_DestroyTexture(texture);
+  if(renderer)
+    SDL_DestroyRenderer(renderer);
+  if(window)
+    SDL_DestroyWindow(window);
   SDL_Quit();
   exit(0);
 }

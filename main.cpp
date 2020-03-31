@@ -25,7 +25,6 @@ int main(int argc, char** argv)
     input = argv[1];
 
   Format format(input);
-  Format format2(input);
 
   av_dump_format(format.get_context(),0, format.get_filename(), 0);
   auto* mystream = format.best_video_stream();
@@ -33,12 +32,11 @@ int main(int argc, char** argv)
   const int WIDTH = 960;
   const int HEIGHT = 540;
 
-  SWScaler my_scaler(mystream,WIDTH,HEIGHT);
-  SWScaler my_scalermini(mystream,WIDTH/8,HEIGHT/8);
+  SWScalerYUV420 my_scaler(mystream,WIDTH,HEIGHT,0);
 
   SDLScreen my_screen("My Screen",WIDTH,HEIGHT);
 
-  std::vector<AVFrame*> frames;
+  //std::vector<AVFrame*> frames;
 
   if(mystream)
   {
@@ -47,14 +45,16 @@ int main(int argc, char** argv)
     print_stream_info(mystream);
 
     AVPacket *packet = av_packet_alloc();
+    auto *frame = av_frame_alloc();
 
     while (av_read_frame(format.get_context(), packet) >= 0) {
+      my_screen.poll_event();
       if(packet->stream_index!=mystream->get_stream()->index)
       {
         continue;
       }
       // framelist[f_count] = av_frame_alloc();
-      auto *frame = av_frame_alloc();
+
 
       avcodec_send_packet(mystream->get_codec_context(), packet);
       avcodec_receive_frame(mystream->get_codec_context(), frame);
@@ -67,36 +67,22 @@ int main(int argc, char** argv)
         continue;
       }
 
-
       if(1)
       {
         auto *scaled = my_scaler.scale(frame);
-        auto *mini = my_scalermini.scale(frame);
-
-        my_screen.display_frame(scaled,WIDTH,HEIGHT);
-
-        my_screen.save_frame_into_texture(scaled,WIDTH,HEIGHT);
-        my_screen.save_frame_into_texturemini(mini,WIDTH/8,HEIGHT/8);
-
+        my_screen.display_frame(scaled,scaled->width,scaled->height);
+        my_screen.save_frame_into_texture(scaled,scaled->width,scaled->height);
         av_frame_free(&scaled);
-        av_frame_free(&mini);
       }
-
-
-      //frames.push_back(scaled);
-      //print_frame_info(frame, mystream->get_codec_context());
-      //framelist[f_count] =  my_scaler.scale(frame);
-
-      // my_screen.poll_event();
-
-      av_packet_unref(packet);
-      av_frame_free(&frame);
-
     }
+
+    av_packet_unref(packet);
+    av_frame_free(&frame);
   }
 
   printf("%lu frames recorded.\n",my_screen.TextureVector.size());
 
+  my_screen.state = SDLScreen::State::DISPLAYING;
   while(my_screen.TextureVector.size()>0)
   {
     my_screen.poll_event();
