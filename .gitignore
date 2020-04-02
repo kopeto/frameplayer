@@ -4,4 +4,5 @@
 *.o
 build/*
 CMakeFiles/*
-extern_src/*
+bin/*
+obj/*
