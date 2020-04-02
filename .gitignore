@@ -1,4 +1,6 @@
 *.mkv
 *.mp4
 *.log
-
+build/*
+CMakeFiles/*
+extern_src/*
