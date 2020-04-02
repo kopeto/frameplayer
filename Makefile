@@ -24,8 +24,11 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	g++ $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 
-$(OBJDIR)/%.o: %.cpp
+$(OBJDIR)/%.o: %.cpp $(OBJDIR)
 	g++ $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR):
+	mkdir -p $(OBJDIR)
 
 clean:
 	rm -f $(OBJDIR)/*.o

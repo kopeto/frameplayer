@@ -1,6 +1,7 @@
 *.mkv
 *.mp4
 *.log
+*.o
 build/*
 CMakeFiles/*
 extern_src/*
