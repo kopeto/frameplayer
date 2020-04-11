@@ -14,9 +14,9 @@ BaseStream::~BaseStream()
     avcodec_free_context(&codec_context);
 }
 
-void BaseStream::open_codec()
+void BaseStream::open_codec(AVDictionary *dict)
 {
-  int ret = avcodec_open2(codec_context, codec, NULL);
+  int ret = avcodec_open2(codec_context, codec, &dict);
   if(ret<0)
   {
     std::ostringstream strm;

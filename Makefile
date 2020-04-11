@@ -9,26 +9,25 @@ OBJECTS = $(addprefix obj/, $(OBJ_FILES))
 # AV_LIBS	= $(shell pkg-config --libs libavformat libavcodec libavutil libswscale)
 # AV_CFLAGS = $(shell pkg-config --cflags libavformat libavcodec libavutil libswscale)
 
-AV_LIBS = -lavformat -lavcodec -lavutil -lswscale
-AV_CFLAGS =
+# SDL_LIBS = $(shell sdl2-config --libs)
+# SDL_CFLAGS = $(shell sdl2-config --cflags)
+
+SDL_CFLAGS = -I./include/SDL2 
+AV_CFLAGS = -I./include
 
 SDL_LIBS = -lSDL2
-SDL_CFLAGS = -I./include/SDL2/
+AV_LIBS = -lavformat -lavcodec -lavutil -lswscale
 
-CXXFLAGS=-Wall -march=native -std=c++17 -O3 -I./include $(AV_CFLAGS) $(SDL_CFLAGS)
-LDFLAGS= -L./lib $(AV_LIBS) $(SDL_LIBS)
-
+CXXFLAGS=-Wall -march=native -std=c++17 -O3 $(AV_CFLAGS) $(SDL_CFLAGS)
+LDFLAGS= -L./lib $(AV_LIBS) $(SDL_LIBS) -pthread
 
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	g++ $(OBJECTS) $(LDFLAGS) -o $(TARGET)
+	g++ -g $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 
-$(OBJDIR)/%.o: %.cpp $(OBJDIR)
-	g++ $(CXXFLAGS) -c $< -o $@
-
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+$(OBJDIR)/%.o: %.cpp
+	g++ -g $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJDIR)/*.o

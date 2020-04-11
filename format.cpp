@@ -20,7 +20,13 @@ Format::Format(const std::string filename)
     throw std::runtime_error(strm.str());
   }
 
-  avformat_find_stream_info(context,NULL);
+  res = avformat_find_stream_info(context,NULL);
+    if(res<0)
+  {
+    std::ostringstream strm;
+    strm << "Error finding strem info in file \""<< filename <<"\""<<std::endl;
+    throw std::runtime_error(strm.str());
+  }
 
   // FILL STREAM LIST
   for(auto i = 0u; i<context->nb_streams; i++)
@@ -75,14 +81,6 @@ VideoStream *Format::best_video_stream()
     return NULL;
   }
 }
-// av_find_best_stream 	( 	AVFormatContext *  	ic,
-// 		enum AVMediaType  	type,
-// 		int  	wanted_stream_nb,
-// 		int  	related_stream,
-// 		AVCodec **  	decoder_ret,
-// 		int  	flags
-// 	)
-
 
 unsigned Format::nbStreams() const
 {

@@ -29,7 +29,7 @@ public:
 
   double real_duration() const;
 
-  void open_codec();
+  void open_codec(AVDictionary *dict = NULL);
 
   //Both Same thing
   Packet *packets(unsigned idx);

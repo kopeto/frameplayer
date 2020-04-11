@@ -32,12 +32,7 @@ SWScalerYUV420::SWScalerYUV420(const VideoStream *stream, int _dest_width, int _
     }
   }
 
-  yPlane = (Uint8*)malloc(dest_width * dest_height);
-  uPlane = (Uint8*)malloc(dest_width * dest_height / 4);
-  vPlane = (Uint8*)malloc(dest_width * dest_height / 4);
-  yPlaneSz = dest_width * dest_height;
-  uvPlaneSz = dest_width * dest_height / 4;
-  uvPitch = dest_width/2;
+
 
   context = sws_getContext(
    stream->get_codec_context()->width,
@@ -56,6 +51,14 @@ SWScalerYUV420::SWScalerYUV420(const VideoStream *stream, int _dest_width, int _
 AVFrame* SWScalerYUV420::scale(AVFrame* src_frame)
 {
   AVFrame* scaled = av_frame_alloc();
+
+  yPlane = (Uint8*)malloc(dest_width * dest_height);
+  uPlane = (Uint8*)malloc(dest_width * dest_height / 4);
+  vPlane = (Uint8*)malloc(dest_width * dest_height / 4);
+  yPlaneSz = dest_width * dest_height;
+  uvPlaneSz = dest_width * dest_height / 4;
+  uvPitch = dest_width/2;
+
   scaled->data[0] = yPlane;
   scaled->data[1] = uPlane;
   scaled->data[2] = vPlane;

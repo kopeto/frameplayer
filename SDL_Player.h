@@ -1,5 +1,6 @@
 #include <SDL.h>
 #include <vector>
+#include <string>
 
 extern "C"
 {
@@ -8,7 +9,7 @@ extern "C"
   #include <libswscale/swscale.h>
 }
 
-class SDLScreen
+class SDL_Player
 {
 public:
   enum class State
@@ -17,27 +18,37 @@ public:
     DISPLAYING
   };
 
-  SDLScreen(const char*, int,int);
-  ~SDLScreen();
+  SDL_Player(const char*, AVStream* stream, int,int);
+  ~SDL_Player();
 
   std::vector<SDL_Texture*> TextureVector;
-  std::vector<SDL_Texture*> TextureminiVector;
 
-  void display_frame(AVFrame* frame,int w,int h);
+  void get_frametextures_from_file(std::string filename);
+
+  void display_avframe(AVFrame* frame);
   void display_texture(unsigned i, bool mini);
-  void display_texturemini(unsigned i);
 
-  void save_frame_into_texture(AVFrame* frame,int w,int h);
-  void save_frame_into_texturemini(AVFrame* frame,int w,int h);
+  SDL_Texture* get_texture_from_frame(AVFrame* frame);
+
+  void save_frame_into_texture(AVFrame* frame);
+  void set_nb_frames(int nb);
+  int get_nb_frames();
   void poll_event();
 
   void quit_all();
 
-  State state;
+  struct vs
+  {
+    int current_frame = 0;
+    State state;
+  } video_state;
 
 private:
+  void display_texture(int idx);
+
   int width;
   int height;
+  int nb_frames;
   SDL_Event event;
   SDL_Window* window;
   SDL_Renderer* renderer;

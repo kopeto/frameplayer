@@ -19,10 +19,10 @@ LDFLAGS=$(AV_LIBS) $(SDL_LIBS)
 all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
-	g++ $(OBJECTS) $(LDFLAGS) -o $(TARGET)
+	g++ -g $(OBJECTS) $(LDFLAGS) -o $(TARGET)
 
 $(OBJDIR)/%.o: %.cpp
-	g++ $(CXXFLAGS) -c $< -o $@
+	g++ -g $(CXXFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJDIR)/*.o
