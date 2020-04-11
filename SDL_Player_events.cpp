@@ -5,7 +5,9 @@ void SDL_Player::poll_event()
   static int lastx=-1;
 
   SDL_PollEvent(&event);
+    if(event.key.repeat) return;
     switch (event.type) {
+
     case SDL_QUIT:
     {
       quit_all();

@@ -33,15 +33,12 @@ int main(int argc, char** argv)
   else
     input = argv[1];
 
-
-  Format format(input);
-  auto* stream = format.best_video_stream();
+  Format format(filename);
+  VideoStream* stream = format.best_video_stream();
   stream->open_codec(NULL);
-
-
+  SWScalerYUV420 my_scaler(stream,WIDTH,HEIGHT);
 
   SDL_Player player("My Screen", stream->get_stream(),WIDTH,HEIGHT);
-  SWScalerYUV420 my_scaler(stream,WIDTH,HEIGHT);
 
 
   int nb_frames = stream->nb_frames();
@@ -175,7 +172,7 @@ int main(int argc, char** argv)
 void thread_decode(const char* filename, std::vector<AVFrame*>& frame_list, int seek_frame, int part_frames )
 {
   Format format(filename);
-  auto* stream = format.best_video_stream();
+  VideoStream* stream = format.best_video_stream();
   stream->open_codec(NULL);
   SWScalerYUV420 my_scaler(stream,WIDTH,HEIGHT);
 
