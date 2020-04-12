@@ -5,6 +5,8 @@ void SDL_Player::poll_event()
   static int lastx=-1;
 
   SDL_PollEvent(&event);
+    int mouse_x, mouse_y;
+    SDL_GetMouseState(&mouse_x, &mouse_y);
 
     switch (event.type) {
 
@@ -15,77 +17,85 @@ void SDL_Player::poll_event()
     }
     case SDL_MOUSEBUTTONDOWN: // if the event is mouse click
     {
-      int x,y;
-      SDL_GetMouseState(&x,&y);
-      if(y > height - height/8)
+      if(video_state.state != State::STOP)
       {
-        video_state.current_frame = (int)(((double)event.motion.x / width)*(double)nb_frames);
-        display_texture(video_state.current_frame);
-        update_last_frame_time();
-        display_texture_mini(video_state.current_frame);
+        if(mouse_y > height - height/8)
+        {
+          video_state.current_frame = (int)(((double)mouse_x / width)*(double)nb_frames);
+          display_texture(video_state.current_frame);
+          update_last_frame_time();
+          display_texture_mini(video_state.current_frame);
+        }
       }
       break;
     }
     case SDL_KEYDOWN:
     {
-      switch(event.key.keysym.sym)
+      if(video_state.state != State::STOP)
       {
-        case SDLK_q:
-        case SDLK_ESCAPE:
+        switch(event.key.keysym.sym)
         {
-          quit_all();
-          break;
-        }
-
-        case SDLK_SPACE:
-        case SDLK_p:
-        {
-          play_pause();
-          break;
-        }
-
-        case SDLK_LEFT:
-        {
-          video_state.current_frame--;
-          if(video_state.current_frame<0)
-            video_state.current_frame = 0;
-          if(TextureVector[video_state.current_frame])
+          case SDLK_q:
+          case SDLK_ESCAPE:
           {
-            display_texture(video_state.current_frame);
-            display_texture_mini(video_state.current_frame);
-            //update_last_frame_time();
+            quit_all();
+            break;
           }
-      
-          break;
-        }
-        case SDLK_RIGHT:
-        {
-          video_state.current_frame++;
-          if(video_state.current_frame>=nb_frames)
+
+          case SDLK_SPACE:
+          case SDLK_p:
+          {
+            play_pause();
+            break;
+          }
+
+          case SDLK_LEFT:
+          {
+            video_state.current_frame--;
+            if(video_state.current_frame<0)
+              video_state.current_frame = 0;
+
+            if(TextureVector[video_state.current_frame])
             {
-              video_state.current_frame--;
-              break;
+              display_texture(video_state.current_frame);
+              display_texture_mini(video_state.current_frame);
+              update_last_frame_time();
             }
-          if(TextureVector[video_state.current_frame])
-          {
-            display_texture(video_state.current_frame);
-            display_texture_mini(video_state.current_frame);
-            //update_last_frame_time();
-          }
-      
-          break;
-        }
-        case SDLK_COMMA:
-        {
-          decrease_sf();
-          break;
-        }
-        case SDLK_PERIOD:
-        {
-          increase_sf();
-          break;
-        }
         
+            break;
+          }
+          case SDLK_RIGHT:
+          {
+            video_state.current_frame++;
+            if(video_state.current_frame>=nb_frames)
+            {
+              video_state.current_frame = nb_frames-1;
+            }
+            if(TextureVector[video_state.current_frame])
+            {
+              display_texture(video_state.current_frame);
+              display_texture_mini(video_state.current_frame);
+              update_last_frame_time();
+              if(video_state.current_frame == nb_frames-1)
+              {
+                video_state.state = State::PAUSED;
+              }
+            }
+        
+            break;
+          }
+          case SDLK_COMMA:
+          {
+            decrease_sf();
+            break;
+          }
+          case SDLK_PERIOD:
+          {
+            increase_sf();
+            break;
+          }
+          
+        }
       }
       break;
     }
@@ -120,10 +130,13 @@ void SDL_Player::poll_event()
     {
       if(video_state.state != State::STOP)
       {
-        if(lastx == event.motion.x) break;
-        lastx=event.motion.x;
-        int i = (int)(((double)event.motion.x / width)*(double)nb_frames);
-        if(TextureVector[i] && event.motion.y > height - height/8)
+        if(lastx == mouse_x) break;
+
+        lastx=mouse_x;
+        
+        int i = (int)(((double)mouse_x / width)*(double)nb_frames);
+
+        if(TextureVector[i] && mouse_y > height - height/8)
         {
           display_texture(video_state.current_frame);
           display_texture_mini(i);
@@ -146,7 +159,7 @@ void SDL_Player::poll_event()
           display_texture(video_state.current_frame);
           update_last_frame_time();
           if(event.motion.y > height - height/8)
-            display_texture_mini((int)(((double)event.motion.x / width)*(double)nb_frames));
+            display_texture_mini((int)(((double)mouse_x / width)*(double)nb_frames));
         }
         else
         {

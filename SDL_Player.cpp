@@ -138,12 +138,12 @@ void SDL_Player::display_texture(int i)
 
 void SDL_Player::display_texture_mini(int i)
 {
-  if(i<(int)TextureVector.size() && TextureVector[i])
+  if(i<nb_frames && TextureVector[i])
   {
     int x,y,w,h;
     w = width/8;
     h = height/8;
-    x = (int) ((double)i / (double)TextureVector.size() * (double)width) - w/2;
+    x = (int) ((double)i / (double)nb_frames * (double)width) - w/2;
     if(x<0) x = 0;
     if(x+w>width) x=width-w;
     y = height - h;
@@ -159,7 +159,7 @@ void SDL_Player::display_texture_mini(int i)
 void SDL_Player::play()
 {
   video_state.state = State::PLAYING;
-  update_last_frame_time();
+  //update_last_frame_time();
 }
 
 
@@ -195,15 +195,23 @@ uint64_t SDL_Player::get_frame_period(AVRational rate, AVRational sf) const
 void SDL_Player::decrease_sf()
 {
   if(video_state.speed_factor.den > 1)
+  {
     video_state.speed_factor.den /= 2;
-  else
+  }
+  else if(video_state.speed_factor.num<32)
+  {
     video_state.speed_factor.num *= 2;
+  }
 }
 
 void SDL_Player::increase_sf()
 {
   if(video_state.speed_factor.num > 1)
+  {
     video_state.speed_factor.num /= 2;
-  else
+  }
+  else if(video_state.speed_factor.den < 32)
+  {
     video_state.speed_factor.den *= 2;
+  }
 }

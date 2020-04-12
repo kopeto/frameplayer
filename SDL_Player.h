@@ -65,7 +65,6 @@ private:
   SDL_Window* window;
   SDL_Renderer* renderer;
   SDL_Texture* texture;
-  //SDL_Texture* texturemini;
 
   void update_last_frame_time();
   uint64_t elapsed_since_last_frame();
