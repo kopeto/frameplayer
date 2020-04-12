@@ -23,8 +23,14 @@ SDL_Player::SDL_Player(const char* window_name, AVStream* stream, int w, int h):
 
   texture = NULL;
   video_state.state = State::STOP;
+  video_state.current_frame = 0;
+  video_state.avg_frame_rate = stream->avg_frame_rate;
+  update_last_frame_time();
+
   nb_frames = stream->nb_frames;
+
   TextureVector = std::vector<SDL_Texture*>(nb_frames,NULL);
+
 }
 
 void SDL_Player::set_nb_frames(int nb)
@@ -119,50 +125,85 @@ void SDL_Player::save_frame_into_texture(AVFrame* frame)
 }
 
 
-void SDL_Player::display_texture(unsigned i, bool mini)
+void SDL_Player::display_texture(int i)
 {
-  if(i<TextureVector.size())
+  if(i<(int)TextureVector.size() && TextureVector[i])
   {
     SDL_RenderClear(renderer);
     SDL_Rect dst{0,0,width,height};
     SDL_RenderCopy(renderer, TextureVector[i], NULL, &dst);
-
-    if(mini) // minitexture
-    {
-      //display_texturemini(unsigned i);
-      // calc position
-      int x,y,w,h;
-      w = width/8;
-      h = height/8;
-      // SDL_QueryTexture(TextureminiVector[i],
-      //   NULL, NULL,
-      //   &w,&h
-      // );
-
-      x = (int) ((double)i / (double)TextureVector.size() * (double)width) - w/2;
-      if(x<0) x = 0;
-      if(x+w>width) x=width-w;
-      y = height - h;
-
-      SDL_Rect dest{x,y,w,h};
-      SDL_RenderCopy(renderer, TextureVector[i], NULL, &dest);
-    }
-
     SDL_RenderPresent(renderer);
   }
 }
 
-
-void SDL_Player::quit_all()
+void SDL_Player::display_texture_mini(int i)
 {
-  for(auto p: TextureVector)
-    SDL_DestroyTexture(p);
-  if(texture)
-    SDL_DestroyTexture(texture);
-  if(renderer)
-    SDL_DestroyRenderer(renderer);
-  if(window)
-    SDL_DestroyWindow(window);
-  SDL_Quit();
-  exit(0);
+  if(i<(int)TextureVector.size() && TextureVector[i])
+  {
+    int x,y,w,h;
+    w = width/8;
+    h = height/8;
+    x = (int) ((double)i / (double)TextureVector.size() * (double)width) - w/2;
+    if(x<0) x = 0;
+    if(x+w>width) x=width-w;
+    y = height - h;
+
+    SDL_Rect dest{x,y,w,h};
+    SDL_RenderCopy(renderer, TextureVector[i], NULL, &dest);
+    SDL_RenderPresent(renderer);
+
+  }
+
+}
+
+void SDL_Player::play()
+{
+  video_state.state = State::PLAYING;
+  update_last_frame_time();
+}
+
+
+void SDL_Player::play_pause()
+{
+  if(video_state.state == State::PLAYING)
+  {
+    video_state.state = State::PAUSED;
+  }
+  else if(video_state.state == State::PAUSED)
+  {
+    video_state.state = State::PLAYING;
+    update_last_frame_time();
+  }
+  
+}
+
+void SDL_Player::update_last_frame_time()
+{
+  video_state.time_last_frame=std::chrono::system_clock::now();
+}
+
+uint64_t SDL_Player::elapsed_since_last_frame()
+{
+  return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now()-video_state.time_last_frame).count();
+}
+
+uint64_t SDL_Player::get_frame_period(AVRational rate, AVRational sf) const
+{
+  return rate.den * 1000000 / rate.num * sf.num / sf.den;
+}
+
+void SDL_Player::decrease_sf()
+{
+  if(video_state.speed_factor.den > 1)
+    video_state.speed_factor.den /= 2;
+  else
+    video_state.speed_factor.num *= 2;
+}
+
+void SDL_Player::increase_sf()
+{
+  if(video_state.speed_factor.num > 1)
+    video_state.speed_factor.num /= 2;
+  else
+    video_state.speed_factor.den *= 2;
 }

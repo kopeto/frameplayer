@@ -16,7 +16,7 @@
 // const int WIDTH = 800;
 // const int HEIGHT = 600;
 
-const char* filename = "in.mp4";
+const char* filename = "ander.mp4";
 const int WIDTH = 960;
 const int HEIGHT = 540;
 
@@ -33,39 +33,19 @@ int main(int argc, char** argv)
   else
     input = argv[1];
 
-  Format format(filename);
+  Format format(input);
   VideoStream* stream = format.best_video_stream();
   stream->open_codec(NULL);
   SWScalerYUV420 my_scaler(stream,WIDTH,HEIGHT);
 
   SDL_Player player("My Screen", stream->get_stream(),WIDTH,HEIGHT);
 
-
   int nb_frames = stream->nb_frames();
   int nb_cores = std::thread::hardware_concurrency();
-  //nb_cores;
 
-  // double part_duration = stream->real_duration()/nb_cores;
-  // int part_frames = (int) part_duration * (stream->get_stream()->time_base.den / stream->get_stream()->time_base.num);
-  
   int part_frames = nb_frames / nb_cores;
   if(nb_frames % nb_cores)
     part_frames ++;  
-
-  printf("%d\n",part_frames);
-
-  // for(auto i=0u; i<threads.size(); ++i)
-  // {
-  //   printf("thread: %d\n",i);
-  //   //thread_decode(input, my_screen, i*part_frames, part_frames );
-  //   std::thread t{thread_decode, input, std::ref(frames), i*part_frames, part_frames};
-  //   threads[i]=std::move(t);
-  // }
-
-  // for(auto i=0u; i<threads.size(); ++i)
-  // {
-  //   threads[i].join();
-  // }
 
   { Timer t;
 
@@ -82,8 +62,6 @@ int main(int argc, char** argv)
     threads[i].join();
   }
 
-  
-  
   for(int i=0; i<nb_cores; ++i)
   {
     for(AVFrame* frame: frames_vvector[i])
@@ -104,62 +82,8 @@ int main(int argc, char** argv)
       printf("Frame %u missing\n",i);
   }
 
+  player.play();
 
-  // NAIVE PLAYING
-  // for(int i=0; i<nb_frames; ++i)
-  // {
-  //   player.display_texture(i,false);
-  //   SDL_Delay(40);
-  // }
-
-  /******************************************
-   * 
-   * WORKING
-   * 
-  ******************************************/
-  // std::vector<AVFrame *> frames;
-  // AVPacket* packet = av_packet_alloc();
-  // AVFrame* frame = av_frame_alloc();
-  // int64_t seek_frame = 0;
-
-  // // PUT DECODER ON THE SEEKING FRAME
-  // avformat_seek_file(format.get_context(), stream->get_stream()->index, 0, seek_frame, seek_frame, AVSEEK_FLAG_ANY);
-
-  // // DECODING LOOP
-  // while (av_read_frame(format.get_context(), packet) >= 0) {
-    
-  //   if(packet->stream_index!=stream->get_stream()->index)
-  //   {
-  //     continue;
-  //   }
-
-  //   player.poll_event();
-    
-  //     // DECODE:
-  //   avcodec_send_packet(stream->get_codec_context(), packet);
-  //   avcodec_receive_frame(stream->get_codec_context(), frame);
-  
-  //   if(av_get_picture_type_char(frame->pict_type)=='?')
-  //   {
-  //     continue;
-  //   }
-
-  //   AVFrame* scaled = my_scaler.scale(frame);
-  //   player.display_avframe(scaled);
-  //   frames.push_back(scaled);
-
-  //   //player.display_avframe(scaled);
-
-  // } // WHILE DECODING
-
-  /******************************************
-   * 
-   * END _ WORKING
-   * 
-  ******************************************/
-
-
-  player.video_state.state = SDL_Player::State::DISPLAYING;
   while(1)
   { 
     player.poll_event();
